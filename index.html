@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pelaporan IPC QA Produksi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom scrollbar for table */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .inp{width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:.75rem;padding:.55rem .75rem;font-size:.8rem;color:#0f172a}
+        .inp:focus{outline:2px solid #3b82f6;border-color:#3b82f6}
+        .set-lbl{display:block;font-size:.75rem;font-weight:600;color:#334155;margin-bottom:.25rem}
+        .set-card{background:#fff;border:1px solid rgba(226,232,240,.8);border-radius:1rem;padding:1.25rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+        .set-h{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0f172a;margin-bottom:.75rem;border-bottom:1px solid #e2e8f0;padding-bottom:.5rem}
+        .set-btn{padding:.5rem .9rem;border-radius:.75rem;font-size:.75rem;font-weight:600}
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i class="fa-solid me-0 fa-clipboard-check text-xl"></i>
+                </div>
+                <div>
+                    <h1 id="app-title" class="font-bold text-lg leading-tight">IPC QA Mobile System</h1>
+                    <p id="app-sub" class="text-xs text-slate-400">Quality Assurance In-Process Control</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <nav class="hidden md:flex space-x-1 bg-slate-800 p-1 rounded-xl">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-blue-600 text-white shadow">
+                    <i class="fa-solid fa-chart-pie mr-2"></i>Dashboard
+                </button>
+                <button onclick="switchTab('form')" id="nav-form" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-plus-circle mr-2"></i>Laporan Baru
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-list-check mr-2"></i>Riwayat IPC
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-gear mr-2"></i>Pengaturan
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Online
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Bottom Navigation Bar (Mobile Only) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white z-40 border-t border-slate-800 flex justify-around py-2 shadow-lg">
+        <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="flex flex-col items-center text-xs py-1 text-blue-400 font-medium">
+            <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+            <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('form')" id="mob-nav-form" class="flex flex-col items-center text-xs py-1 text-slate-400 font-medium">
+            <i class="fa-solid fa-plus-circle text-lg mb-0.5"></i>
+            <span>Input IPC</span>
+        </button>
+        <button onclick="switchTab('history')" id="mob-nav-history" class="flex flex-col items-center text-xs py-1 text-slate-400 font-medium">
+            <i class="fa-solid fa-list-check text-lg mb-0.5"></i>
+            <span>Riwayat</span>
+        </button>
+        <button onclick="switchTab('settings')" id="mob-nav-settings" class="flex flex-col items-center text-xs py-1 text-slate-400 font-medium">
+            <i class="fa-solid fa-gear text-lg mb-0.5"></i>
+            <span>Pengaturan</span>
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-16 md:mb-0">
+        
+        <!-- SECTION 1: DASHBOARD -->
+        <section id="section-dashboard" class="space-y-6">
+            <!-- Filter Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex items-center space-x-2 text-slate-700 font-semibold">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span>Filter Dashboard</span>
+                </div>
+                <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+                    <select id="filter-line" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-2.5 flex-1 sm:flex-initial">
+                        <option value="ALL">Semua Line Produksi</option>
+                        <option value="Line A">Line A (Liquid/Sirup)</option>
+                        <option value="Line B">Line B (Tablet/Kapsul)</option>
+                        <option value="Line C">Line C (Semi Solid/Salep)</option>
+                        <option value="Line D">Line D (Packaging)</option>
+                    </select>
+                    <select id="filter-status" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-2.5 flex-1 sm:flex-initial">
+                        <option value="ALL">Semua Status</option>
+                        <option value="PASS">PASS (Lolos)</option>
+                        <option value="FAIL">FAIL (Gagal)</option>
+                        <option value="CONDITIONAL">CONDITIONAL (Bersyarat)</option>
+                    </select>
+                    <select id="filter-period" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl p-2.5 flex-1 sm:flex-initial"><option value="ALL">Semua Periode</option><option value="7">7 Hari</option><option value="30">30 Hari</option><option value="90">90 Hari</option></select>
+                </div>
+            </div>
+
+            <!-- Summary Stat Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Inspeksi</p>
+                        <h3 id="stat-total" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Lolos (Pass)</p>
+                        <h3 id="stat-pass" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Gagal (Fail)</p>
+                        <h3 id="stat-fail" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pass Rate (%)</p>
+                        <h3 id="stat-rate" class="text-2xl font-bold text-indigo-600 mt-1">0%</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Line/Bar Chart -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 lg:col-span-2">
+                    <h3 class="text-base font-semibold text-slate-900 mb-4 flex items-center">
+                        <i class="fa-solid fa-chart-column mr-2 text-blue-600"></i> Tren Inspeksi Harian
+                    </h3>
+                    <div class="relative h-64 sm:h-72 w-full">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h3 class="text-base font-semibold text-slate-900 mb-4 flex items-center">
+                        <i class="fa-solid fa-chart-pie mr-2 text-blue-600"></i> Proporsi Status IPC
+                    </h3>
+                    <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="dash-insights" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </section>
+
+        <!-- SECTION 2: FORMULIR INPUT IPC -->
+        <section id="section-form" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="bg-slate-900 p-4 sm:p-6 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold">Formulir Pemeriksaan IPC QA</h2>
+                        <p class="text-xs text-slate-400">Isi parameter pengujian dan dokumentasikan bukti inspeksi produksi.</p>
+                    </div>
+                    <span id="display-report-id" class="text-xs font-mono bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-blue-400">IPC-20261026-XXXX</span>
+                </div>
+
+                <form id="ipc-form" onsubmit="handleFormSubmit(event)" class="p-4 sm:p-6 space-y-6">
+                    <!-- General Information -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center border-b pb-2">
+                            <i class="fa-solid fa-circle-info mr-2 text-blue-600"></i> Informasi Umum Produksi
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Inspector QA *</label>
+                                <select id="inspector-name" required class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500"></select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Line Produksi *</label>
+                                <select id="production-line" required class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">-- Pilih Line --</option>
+                                    <option value="Line A">Line A (Liquid/Sirup)</option>
+                                    <option value="Line B">Line B (Tablet/Kapsul)</option>
+                                    <option value="Line C">Line C (Semi Solid/Salep)</option>
+                                    <option value="Line D">Line D (Packaging)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Produk *</label>
+                                <input type="text" id="product-name" list="product-list" onchange="loadTemplate()" required placeholder="Contoh: Paracetamol Syrup 120mg" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Batch / Lot *</label>
+                                <input type="text" id="batch-number" required placeholder="Contoh: BTH-2026-9901" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Tahap Proses IPC *</label>
+                                <select id="process-stage" onchange="loadTemplate()" required class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">-- Pilih Tahapan --</option>
+                                    <option value="Penimbangan Raw Material">Penimbangan Raw Material</option>
+                                    <option value="Pencampuran (Mixing)">Pencampuran (Mixing)</option>
+                                    <option value="Pencetakan / Filling">Pencetakan / Filling</option>
+                                    <option value="Pengemasan Primer">Pengemasan Primer (Stripping/Bottling)</option>
+                                    <option value="Pengemasan Sekunder">Pengemasan Sekunder (Karton/Etiket)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Waktu Inspeksi</label>
+                                <input type="text" id="inspection-time" readonly class="w-full bg-slate-100 border border-slate-300 text-slate-600 text-sm rounded-xl p-2.5 cursor-not-allowed">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Parameters Check -->
+                    <div>
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-list-check mr-2 text-blue-600"></i> Parameter Pengujian IPC
+                            </h3>
+                            <button type="button" onclick="addParamRow()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                <i class="fa-solid fa-plus mr-1"></i>Tambah Parameter
+                            </button>
+                        </div>
+                        
+                        <button type="button" onclick="saveTemplate()" class="text-xs text-blue-600 underline mb-2"><i class="fa-solid fa-bookmark mr-1"></i>Simpan parameter ini sebagai template produk &amp; tahap</button>
+                        <div id="params-container" class="space-y-3">
+                            <!-- Dynamic Parameter Rows inserted by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Camera & Photo Capture Section -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center border-b pb-2">
+                            <i class="fa-solid fa-camera mr-2 text-blue-600"></i> Bukti Foto Inspection (Webcam / HP Camera)
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                            <!-- Viewfinder / Controls -->
+                            <div class="bg-slate-900 rounded-2xl p-4 text-center text-white relative">
+                                <div id="camera-box" class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center mb-3">
+                                    <!-- Video Element -->
+                                    <video id="webcam-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                                    <!-- Fallback / Placeholder Icon -->
+                                    <div id="camera-placeholder" class="text-slate-500 flex flex-col items-center">
+                                        <i class="fa-solid fa-video-slash text-4xl mb-2"></i>
+                                        <p class="text-xs">Kamera Belum Aktif</p>
+                                    </div>
+                                    <canvas id="photo-canvas" class="hidden"></canvas>
+                                </div>
+
+                                <div class="flex flex-wrap gap-2 justify-center">
+                                    <button type="button" id="btn-start-cam" onclick="startCamera()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold flex items-center transition-all">
+                                        <i class="fa-solid fa-power-off mr-1.5"></i>Buka Kamera
+                                    </button>
+                                    <button type="button" id="btn-switch-cam" onclick="switchCamera()" class="hidden px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-semibold transition-all">
+                                        <i class="fa-solid fa-rotate mr-1.5"></i>Switch
+                                    </button>
+                                    <button type="button" id="btn-capture" onclick="capturePhoto()" disabled class="px-4 py-2 bg-emerald-600 disabled:bg-slate-700 disabled:opacity-50 hover:bg-emerald-700 rounded-xl text-xs font-semibold flex items-center transition-all">
+                                        <i class="fa-solid fa-aperture mr-1.5"></i>Ambil Foto
+                                    </button>
+                                </div>
+
+                                <div class="mt-3 text-left border-t border-slate-800 pt-2">
+                                    <label class="block text-[11px] text-slate-400 mb-1">Atau Upload dari Galeri HP/File:</label>
+                                    <input type="file" id="fallback-file" accept="image/*" onchange="handleFileUpload(event)" class="block w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-blue-400 hover:file:bg-slate-700 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <!-- Preview Result Photo -->
+                            <div class="border border-dashed border-slate-300 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[220px] bg-slate-50">
+                                <span class="text-xs font-semibold text-slate-500 mb-2">Hasil Tangkapan Kamera</span>
+                                <div id="preview-container" class="w-full h-44 rounded-xl border border-slate-200 overflow-hidden bg-white flex items-center justify-center">
+                                    <span class="text-xs text-slate-400 italic">Belum ada foto diambil</span>
+                                </div>
+                                <button type="button" id="btn-clear-photo" onclick="clearPhoto()" class="hidden mt-3 text-xs text-rose-600 hover:text-rose-800 font-medium">
+                                    <i class="fa-solid fa-trash mr-1"></i>Hapus Foto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Decision & Deviation Note -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center border-b pb-2">
+                            <i class="fa-solid fa-gavel mr-2 text-blue-600"></i> Keputusan Status & Catatan Ketidaksesuaian
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <label class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-emerald-50/50 has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 transition-all">
+                                <input type="radio" name="ipc-status" value="PASS" checked class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                                <div class="ml-3">
+                                    <span class="block text-sm font-bold text-emerald-700">PASS (Lolos)</span>
+                                    <span class="block text-xs text-slate-500">Sesuai spesifikasi QA</span>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-amber-50/50 has-[:checked]:bg-amber-50 has-[:checked]:border-amber-500 transition-all">
+                                <input type="radio" name="ipc-status" value="CONDITIONAL" class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                <div class="ml-3">
+                                    <span class="block text-sm font-bold text-amber-700">CONDITIONAL</span>
+                                    <span class="block text-xs text-slate-500">Perlu re-check / penyesuaian</span>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-rose-50/50 has-[:checked]:bg-rose-50 has-[:checked]:border-rose-500 transition-all">
+                                <input type="radio" name="ipc-status" value="FAIL" class="text-rose-600 focus:ring-rose-500 h-4 w-4">
+                                <div class="ml-3">
+                                    <span class="block text-sm font-bold text-rose-700">FAIL (Gagal)</span>
+                                    <span class="block text-xs text-slate-500">Reject / Deviasi berat</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Deviasi Ketidaksesuaian</label>
+                            <textarea id="deviation-note" rows="3" placeholder="Tuliskan catatan detail jika ada deviasi atau instruksi khusus perbaikan..." class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit Actions -->
+                    <div class="flex items-center justify-end space-x-3 border-t pt-4">
+                        <button type="button" onclick="switchTab('dashboard')" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-all">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all flex items-center">
+                            <i class="fa-solid fa-paper-plane mr-2"></i>Simpan Laporan IPC
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECTION 3: RIWAYAT / DATA TABLE -->
+        <section id="section-history" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Riwayat Laporan IPC QA</h2>
+                        <p class="text-xs text-slate-500">Daftar rekaman hasil pemeriksaan in-process control.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Cari Batch / Produk / QA..." class="w-full bg-slate-50 border border-slate-300 text-xs rounded-xl pl-9 pr-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button onclick="exportCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center transition-all">
+                            <i class="fa-solid fa-file-csv mr-1.5"></i>Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 sm:px-6 bg-slate-50 border-b border-slate-200 grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                    <input type="date" id="hf-from" onchange="histPage=1;renderTable()" class="inp" title="Dari tanggal">
+                    <input type="date" id="hf-to" onchange="histPage=1;renderTable()" class="inp" title="Sampai tanggal">
+                    <select id="hf-line" onchange="histPage=1;renderTable()" class="inp"></select>
+                    <select id="hf-status" onchange="histPage=1;renderTable()" class="inp"><option value="">Semua Status</option><option>PASS</option><option>CONDITIONAL</option><option>FAIL</option></select>
+                    <select id="hf-review" onchange="histPage=1;renderTable()" class="inp"><option value="">Semua Tindak Lanjut</option><option value="OPEN">Open</option><option value="REVIEWED">Reviewed</option><option value="CLOSED">Closed</option></select>
+                </div>
+                <!-- Responsive Table Container -->
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs text-slate-700">
+                        <thead class="bg-slate-50 text-slate-900 uppercase tracking-wider font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3 sm:p-4">ID / Waktu</th>
+                                <th class="p-3 sm:p-4">Produk & Batch</th>
+                                <th class="p-3 sm:p-4">Line & Tahap</th>
+                                <th class="p-3 sm:p-4">Inspector QA</th>
+                                <th class="p-3 sm:p-4 text-center">Status</th>
+                                <th class="p-3 sm:p-4 text-center">Bukti Foto</th>
+                                <th class="p-3 sm:p-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-200">
+                            <!-- Table Rows via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="hist-pager" class="flex justify-between items-center p-3 text-xs text-slate-500 border-t"></div>
+                <div id="table-empty" class="hidden p-8 text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-inbox text-3xl mb-2 text-slate-300"></i>
+                    <p>Tidak ada data laporan IPC yang ditemukan.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PENGATURAN -->
+        <section id="section-settings" class="hidden space-y-4 max-w-3xl mx-auto">
+            <div class="set-card flex justify-between items-center">
+                <span id="set-account" class="text-sm text-slate-600">Mode lokal (belum login)</span>
+                <button type="button" onclick="window.cloud && window.cloud.logout()" class="set-btn bg-slate-200 text-slate-800">Keluar</button>
+            </div>
+            <div class="set-card">
+                <div class="set-h"><i class="fa-solid fa-building mr-2 text-blue-600"></i>Umum</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><label class="set-lbl">Nama Sistem / Perusahaan</label><input id="set-org" class="inp"></div>
+                    <div><label class="set-lbl">Subjudul</label><input id="set-sub" class="inp"></div>
+                    <div><label class="set-lbl">Personil Default (terpilih otomatis di formulir)</label><select id="set-inspector" class="inp"></select></div>
+                    <div><label class="set-lbl">Prefix ID Laporan</label><input id="set-prefix" class="inp" maxlength="8" placeholder="IPC"></div>
+                </div>
+            </div>
+
+            <div class="set-card">
+                <div class="set-h"><i class="fa-solid fa-users mr-2 text-blue-600"></i>Personil IPC</div>
+                <div class="flex justify-between items-center mb-2"><span class="set-lbl mb-0">Daftar nama personil (pilihan di formulir)</span>
+                    <button type="button" onclick="addPersRow()" class="set-btn bg-blue-50 text-blue-600"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div>
+                <div id="set-pers" class="space-y-2"></div>
+            </div>
+
+            <div class="set-card">
+                <div class="set-h"><i class="fa-solid fa-industry mr-2 text-blue-600"></i>Master Data</div>
+                <div class="flex justify-between items-center mb-2"><span class="set-lbl mb-0">Line Produksi (kode &amp; keterangan)</span>
+                    <button type="button" onclick="addLineRow()" class="set-btn bg-blue-50 text-blue-600"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div>
+                <div id="set-lines" class="space-y-2 mb-5"></div>
+                <div class="flex justify-between items-center mb-2"><span class="set-lbl mb-0">Tahap Proses IPC</span>
+                    <button type="button" onclick="addStageRow()" class="set-btn bg-blue-50 text-blue-600"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div>
+                <div id="set-stages" class="space-y-2 mb-5"></div>
+                <div class="flex justify-between items-center mb-2"><span class="set-lbl mb-0">Parameter Default Formulir</span>
+                    <button type="button" onclick="addSetParamRow()" class="set-btn bg-blue-50 text-blue-600"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div>
+                <div id="set-params" class="space-y-2"></div>
+                <p class="text-[11px] text-slate-400 mt-3">Mengubah kode line tidak mengubah laporan lama yang sudah tersimpan.</p>
+            </div>
+
+            <div class="set-card">
+                <div class="set-h"><i class="fa-solid fa-sliders mr-2 text-blue-600"></i>Aturan Formulir &amp; Foto</div>
+                <div class="space-y-3 text-sm">
+                    <label class="flex items-start gap-3"><input type="checkbox" id="set-autostatus" class="mt-1 h-4 w-4"><span>Ingatkan jika ada parameter FAIL tetapi status masih PASS</span></label>
+                    <label class="flex items-start gap-3"><input type="checkbox" id="set-reqphoto" class="mt-1 h-4 w-4"><span>Wajibkan bukti foto</span></label>
+                    <label class="flex items-start gap-3"><input type="checkbox" id="set-reqnote" class="mt-1 h-4 w-4"><span>Wajibkan catatan jika status FAIL / CONDITIONAL</span></label>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                    <div><label class="set-lbl">Kamera Default</label><select id="set-cam" class="inp"><option value="environment">Belakang</option><option value="user">Depan</option></select></div>
+                    <div><label class="set-lbl">Lebar Maks. Foto</label><select id="set-maxw" class="inp"><option value="640">640 px (hemat)</option><option value="800">800 px</option><option value="1024">1024 px</option><option value="1280">1280 px</option></select></div>
+                    <div><label class="set-lbl">Kualitas JPEG</label><select id="set-q" class="inp"><option value="0.6">Rendah</option><option value="0.75">Sedang</option><option value="0.85">Tinggi</option></select></div>
+                </div>
+            </div>
+
+            <div class="set-card">
+                <div class="set-h"><i class="fa-solid fa-database mr-2 text-blue-600"></i>Data &amp; Cadangan</div>
+                <p id="set-usage" class="text-xs text-slate-500 mb-3"></p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="backupData()" class="set-btn bg-slate-800 text-white"><i class="fa-solid fa-download mr-1.5"></i>Backup JSON</button>
+                    <button type="button" onclick="document.getElementById('set-restore').click()" class="set-btn bg-slate-200 text-slate-800"><i class="fa-solid fa-upload mr-1.5"></i>Restore</button>
+                    <input type="file" id="set-restore" accept=".json" class="hidden" onchange="restoreData(event)">
+                    <button type="button" onclick="resetDemo()" class="set-btn bg-amber-100 text-amber-800">Reset ke Data Contoh</button>
+                    <button type="button" onclick="deleteAllData()" class="set-btn bg-rose-100 text-rose-700"><i class="fa-solid fa-trash mr-1.5"></i>Hapus Semua Laporan</button>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="resetSettings()" class="set-btn border border-slate-300 text-slate-700">Kembalikan Default</button>
+                <button type="button" onclick="saveSettingsFromUI()" class="set-btn bg-blue-600 text-white shadow-md px-5"><i class="fa-solid fa-floppy-disk mr-1.5"></i>Simpan Pengaturan</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Detail Laporan -->
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center">
+                    <i class="fa-solid fa-file-contract mr-2 text-blue-400"></i> Detail Laporan IPC QA
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="modal-content" class="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
+                <!-- Modal Body via JS -->
+            </div>
+
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                <button onclick="printReport()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold flex items-center">
+                    <i class="fa-solid fa-print mr-1.5"></i>Cetak PDF
+                </button>
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-semibold">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-overlay" class="fixed inset-0 z-[100] bg-slate-900/95 flex items-center justify-center p-6">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-3">
+            <h2 class="text-lg font-bold text-slate-900">Masuk ke IPC QA</h2>
+            <input id="login-email" type="email" placeholder="Email" class="inp">
+            <input id="login-pass" type="password" placeholder="Password" class="inp" onkeydown="if(event.key==='Enter')doLogin()">
+            <p id="login-err" class="text-xs text-rose-600"></p>
+            <button onclick="doLogin()" class="w-full bg-blue-600 text-white rounded-xl py-2.5 text-sm font-semibold">Masuk</button>
+            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" class="w-full text-xs text-slate-500 underline">Lanjut tanpa login (data lokal saja)</button>
+        </div>
+    </div>
+    <datalist id="product-list"></datalist>
+    <!-- Script Logic -->
+    <script>
+        // --- DATA STORE ---
+        const LOCAL_KEY = 'ipc_qa_reports_data_v1';
+        let ipcReports = [];
+
+        // Initial Dummy Data
+        const initialDummy = [
+            {
+                id: 'IPC-20261026-001',
+                timestamp: '2026-10-26 08:30',
+                inspector: 'Ahmad Subagyo',
+                line: 'Line A',
+                product: 'Paracetamol Syrup 120mg',
+                batch: 'BTH-2026-012',
+                stage: 'Pencampuran (Mixing)',
+                status: 'PASS',
+                note: 'Warna dan transparansi larutan homogen. pH sesuai kriteria 5.5.',
+                photo: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&auto=format&fit=crop&q=60',
+                parameters: [
+                    { name: 'pH Larutan', spec: '5.0 - 6.0', result: '5.5', status: 'PASS' },
+                    { name: 'Viskositas', spec: '150 - 200 cPs', result: '175 cPs', status: 'PASS' },
+                    { name: 'Kejernihan Visual', spec: 'Jernih Bebas Partikel', result: 'Jernih Sesuai', status: 'PASS' }
+                ]
+            },
+            {
+                id: 'IPC-20261026-002',
+                timestamp: '2026-10-26 09:45',
+                inspector: 'Siti Rahma',
+                line: 'Line B',
+                product: 'Amoxicillin 500mg Cap',
+                batch: 'BTH-2026-088',
+                stage: 'Pencetakan / Filling',
+                status: 'FAIL',
+                note: 'Terdapat variasi bobot melebihi deviasi ±5% pada 3 sampel consecutive.',
+                photo: 'https://images.unsplash.com/photo-1585435557343-3b092031a831?w=400&auto=format&fit=crop&q=60',
+                parameters: [
+                    { name: 'Bobot Rata-rata (20 Kap)', spec: '600mg ± 2%', result: '645mg', status: 'FAIL' },
+                    { name: 'Waktu Hancur', spec: '< 15 Menit', result: '11 Menit', status: 'PASS' },
+                    { name: 'Kekerasan Tablet', spec: '7 - 10 kP', result: '8.2 kP', status: 'PASS' }
+                ]
+            },
+            {
+                id: 'IPC-20261026-003',
+                timestamp: '2026-10-26 11:15',
+                inspector: 'Dewi Kartika',
+                line: 'Line D',
+                product: 'Vitamin C 500mg Strip',
+                batch: 'BTH-2026-104',
+                stage: 'Pengemasan Sekunder',
+                status: 'CONDITIONAL',
+                note: 'Cetakan Expired Date agak buram pada karton outer. Mesin coding disesuaikan ulang.',
+                photo: 'https://images.unsplash.com/photo-1616671285442-376146c28790?w=400&auto=format&fit=crop&q=60',
+                parameters: [
+                    { name: 'Kebocoran Stripping', spec: 'Tidak Bocor (Vakum)', result: 'Bagus', status: 'PASS' },
+                    { name: 'Kelengkapan Etiket & Mfg Date', spec: 'Jelas & Terbaca', result: 'Agak Buram', status: 'FAIL' },
+                    { name: 'Jumlah Isi Per Box', spec: '10 Strip x 10 Tab', result: 'Pas 10 Strip', status: 'PASS' }
+                ]
+            }
+        ];
+
+        // Global Chart Instances
+        let trendChartInstance = null;
+        let statusChartInstance = null;
+
+        // WebRTC Camera State
+        let mediaStream = null;
+        let capturedPhotoData = null;
+        let facingMode = 'environment'; // 'user' or 'environment'
+
+        // --- APP INITIALIZATION ---
+        window.onload = function() {
+            loadSettings();
+            loadReports();
+            updateTime();
+            generateReportID();
+            renderDefaultParameters();
+            applySettings();
+            renderDashboard();
+            renderTable();
+        };
+
+        function loadReports() {
+            const stored = localStorage.getItem(LOCAL_KEY);
+            if (stored) {
+                try {
+                    ipcReports = JSON.parse(stored);
+                } catch(e) {
+                    ipcReports = initialDummy;
+                }
+            } else {
+                ipcReports = initialDummy;
+                saveReports();
+            }
+        }
+
+        function saveReports() {
+            try { localStorage.setItem(LOCAL_KEY, JSON.stringify(ipcReports)); }
+            catch(e) { alert('Penyimpanan penuh! Backup data lalu hapus laporan lama, atau kecilkan ukuran foto di Pengaturan.'); }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toISOString().slice(0, 19).replace('T', ' ');
+            document.getElementById('inspection-time').value = timeStr;
+        }
+
+        function generateReportID() {
+            const random = Math.floor(1000 + Math.random() * 9000);
+            const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+            const id = `${(settings.prefix || 'IPC')}-${dateStr}-${random}`;
+            document.getElementById('display-report-id').innerText = id;
+            return id;
+        }
+
+
+// --- CLOUD (Firebase) ---
+        let cloudUser = null, cloudFirst = true;
+        function cloudCall(fn, arg) { if (cloudUser && window.cloud) window.cloud[fn](arg).catch(e => alert('Gagal sinkron ke cloud: ' + e.message)); }
+        function cloudSet() { cloudCall('saveSettings', settings); }
+        window.onCloudAuth = u => {
+            cloudUser = u; cloudFirst = true;
+            document.getElementById('login-overlay').classList.toggle('hidden', !!u);
+            document.getElementById('set-account').innerText = u ? `Masuk sebagai ${u.email}` : 'Mode lokal (belum login)';
+        };
+        window.onCloudReports = list => {
+            const extra = ipcReports.filter(r => !list.some(x => x.id === r.id));
+            if (cloudFirst && extra.length && !localStorage.getItem('ipc_migrated') && confirm(`Ada ${extra.length} laporan lokal yang belum ada di cloud. Unggah ke cloud?`)) {
+                extra.forEach(r => window.cloud.saveReport(r));
+                list = list.concat(extra);
+            }
+            if (cloudFirst) localStorage.setItem('ipc_migrated', '1');
+            cloudFirst = false;
+            ipcReports = list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            saveReports(); renderTable(); renderDashboard(); refreshProductList();
+        };
+        window.onCloudSettings = st => {
+            settings = { ...defaultSettings, ...st }; localStorage.setItem(SET_KEY, JSON.stringify(settings));
+            applySettings();
+            if (!document.getElementById('section-settings').classList.contains('hidden')) renderSettingsUI();
+        };
+        async function doLogin() {
+            const e = document.getElementById('login-email').value.trim(), p = document.getElementById('login-pass').value;
+            const err = document.getElementById('login-err'); err.innerText = '';
+            try { await window.cloud.login(e, p); } catch (x) { err.innerText = 'Login gagal: email atau password salah, atau cloud belum siap.'; }
+        }
+
+        // --- SETTINGS ---
+        const SET_KEY = 'ipc_qa_settings_v1';
+        const defaultSettings = {
+            org: 'IPC QA Mobile System', sub: 'Quality Assurance In-Process Control', inspector: '', prefix: 'IPC',
+            lines: [
+                { code: 'Line A', desc: 'Liquid/Sirup' }, { code: 'Line B', desc: 'Tablet/Kapsul' },
+                { code: 'Line C', desc: 'Semi Solid/Salep' }, { code: 'Line D', desc: 'Packaging' }
+            ],
+            stages: ['Penimbangan Raw Material', 'Pencampuran (Mixing)', 'Pencetakan / Filling', 'Pengemasan Primer', 'Pengemasan Sekunder'],
+            params: [
+                { name: 'Bobot Rata-rata / Volume', spec: 'Sesuai Standar Deviasi ±2%' },
+                { name: 'Uji Kebocoran Wadah', spec: 'Vakum / Tidak ada kebocoran' },
+                { name: 'Pemeriksaan Visual / Fisik', spec: 'Homogen & Bebas Partikel Asing' }
+            ],
+            autoStatus: true, reqPhoto: false, reqNote: true, cam: 'environment', maxW: 1024, q: 0.75
+        };
+        let settings = JSON.parse(JSON.stringify(defaultSettings));
+
+        function esc(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function loadSettings() {
+            try { const st = JSON.parse(localStorage.getItem(SET_KEY)); if (st) settings = { ...settings, ...st }; } catch(e) {}
+        }
+        function lineLabel(l) { return l.desc ? `${l.code} (${l.desc})` : l.code; }
+
+        function applySettings() {
+            document.getElementById('app-title').innerText = settings.org;
+            document.getElementById('app-sub').innerText = settings.sub;
+            document.title = settings.org;
+            facingMode = settings.cam;
+            const fill = (id, html, keep = true) => {
+                const el = document.getElementById(id); const v = el.value;
+                el.innerHTML = html; if (keep) el.value = v;
+            };
+            const lineOpts = settings.lines.map(l => `<option value="${esc(l.code)}">${esc(lineLabel(l))}</option>`).join('');
+            fill('filter-line', '<option value="ALL">Semua Line Produksi</option>' + lineOpts);
+            fill('hf-line', '<option value="">Semua Line</option>' + lineOpts);
+            refreshProductList();
+            fill('production-line', '<option value="">-- Pilih Line --</option>' + lineOpts);
+            fill('process-stage', '<option value="">-- Pilih Tahapan --</option>' + settings.stages.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join(''));
+            if (!settings.personnel) settings.personnel = [...new Set(ipcReports.map(r => r.inspector).filter(Boolean))];
+            fill('inspector-name', '<option value="">-- Pilih Personil --</option>' + settings.personnel.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join(''));
+            const insp = document.getElementById('inspector-name');
+            if (!insp.value && settings.inspector) insp.value = settings.inspector;
+        }
+
+        function lineRowHTML(l = {code:'', desc:''}) {
+            return `<div class="flex gap-2 set-row"><input class="inp l-code" style="max-width:8rem" placeholder="Kode" value="${esc(l.code)}"><input class="inp l-desc" placeholder="Keterangan" value="${esc(l.desc)}"><button type="button" onclick="this.parentElement.remove()" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
+        }
+        function stageRowHTML(v = '') {
+            return `<div class="flex gap-2 set-row"><input class="inp s-name" placeholder="Nama tahap" value="${esc(v)}"><button type="button" onclick="this.parentElement.remove()" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
+        }
+        function setParamRowHTML(p = {name:'', spec:''}) {
+            return `<div class="flex gap-2 set-row"><input class="inp p-name" placeholder="Parameter" value="${esc(p.name)}"><input class="inp p-spec" placeholder="Spesifikasi" value="${esc(p.spec)}"><input type="number" step="any" class="inp p-min" style="max-width:5rem" placeholder="Min" value="${esc(p.min)}"><input type="number" step="any" class="inp p-max" style="max-width:5rem" placeholder="Max" value="${esc(p.max)}"><button type="button" onclick="this.parentElement.remove()" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
+        }
+function persRowHTML(v = '') { return `<div class="flex gap-2 set-row"><input class="inp pers-name" placeholder="Nama personil" value="${esc(v)}"><button type="button" onclick="this.parentElement.remove()" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`; }
+        function addPersRow() { document.getElementById('set-pers').insertAdjacentHTML('beforeend', persRowHTML()); }
+        function addLineRow() { document.getElementById('set-lines').insertAdjacentHTML('beforeend', lineRowHTML()); }
+        function addStageRow() { document.getElementById('set-stages').insertAdjacentHTML('beforeend', stageRowHTML()); }
+        function addSetParamRow() { document.getElementById('set-params').insertAdjacentHTML('beforeend', setParamRowHTML()); }
+
+        function renderSettingsUI() {
+            const g = id => document.getElementById(id);
+            g('set-org').value = settings.org; g('set-sub').value = settings.sub;
+             g('set-prefix').value = settings.prefix; g('set-inspector').dataset.v = settings.inspector;
+g('set-pers').innerHTML = (settings.personnel || []).map(persRowHTML).join('');
+            g('set-inspector').innerHTML = '<option value="">(tidak ada)</option>' + (settings.personnel || []).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+            g('set-lines').innerHTML = settings.lines.map(lineRowHTML).join('');
+            g('set-stages').innerHTML = settings.stages.map(stageRowHTML).join('');
+            g('set-params').innerHTML = settings.params.map(setParamRowHTML).join('');
+            g('set-inspector').value = settings.inspector || '';
+            g('set-autostatus').checked = settings.autoStatus; g('set-reqphoto').checked = settings.reqPhoto; g('set-reqnote').checked = settings.reqNote;
+            g('set-cam').value = settings.cam; g('set-maxw').value = settings.maxW; g('set-q').value = settings.q;
+            const kb = (JSON.stringify(ipcReports).length / 1024).toFixed(0);
+            g('set-usage').innerText = `${ipcReports.length} laporan tersimpan di perangkat ini (±${kb} KB dari kuota browser ±5.000 KB).`;
+        }
+
+        function saveSettingsFromUI() {
+            const g = id => document.getElementById(id);
+            const personnel = [...document.querySelectorAll('#set-pers .pers-name')].map(i => i.value.trim()).filter(Boolean);
+            const lines = [...document.querySelectorAll('#set-lines .set-row')].map(r => ({ code: r.querySelector('.l-code').value.trim(), desc: r.querySelector('.l-desc').value.trim() })).filter(l => l.code);
+            const stages = [...document.querySelectorAll('#set-stages .s-name')].map(i => i.value.trim()).filter(Boolean);
+            const params = [...document.querySelectorAll('#set-params .set-row')].map(r => ({ name: r.querySelector('.p-name').value.trim(), spec: r.querySelector('.p-spec').value.trim(), min: r.querySelector('.p-min').value, max: r.querySelector('.p-max').value })).filter(p => p.name);
+            if (!lines.length || !stages.length) { alert('Minimal harus ada 1 line produksi dan 1 tahap proses.'); return; }
+            settings = {
+                org: g('set-org').value.trim() || defaultSettings.org, sub: g('set-sub').value.trim(),
+                inspector: personnel.includes(g('set-inspector').value) ? g('set-inspector').value : '', prefix: (g('set-prefix').value.trim() || 'IPC').toUpperCase(),
+                lines, stages, params, personnel, templates: settings.templates,
+                autoStatus: g('set-autostatus').checked, reqPhoto: g('set-reqphoto').checked, reqNote: g('set-reqnote').checked,
+                cam: g('set-cam').value, maxW: +g('set-maxw').value, q: +g('set-q').value
+            };
+            localStorage.setItem(SET_KEY, JSON.stringify(settings)); cloudSet();
+            applySettings(); generateReportID(); renderDefaultParameters();
+            alert('Pengaturan disimpan.');
+        }
+
+        function resetSettings() {
+            if (!confirm('Kembalikan semua pengaturan ke default?')) return;
+            settings = JSON.parse(JSON.stringify(defaultSettings));
+            localStorage.removeItem(SET_KEY);
+            applySettings(); renderSettingsUI(); generateReportID(); renderDefaultParameters();
+        }
+
+        function compressImage(src, cb) {
+            const img = new Image();
+            img.onload = () => {
+                const r = Math.min(1, settings.maxW / img.width);
+                const c = document.createElement('canvas');
+                c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                cb(c.toDataURL('image/jpeg', settings.q));
+            };
+            img.onerror = () => cb(src);
+            img.src = src;
+        }
+
+        function backupData() {
+            const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), settings, reports: ipcReports })], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `IPC_QA_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click(); URL.revokeObjectURL(a.href);
+        }
+        function restoreData(e) {
+            const f = e.target.files[0]; if (!f) return;
+            const rd = new FileReader();
+            rd.onload = ev => {
+                try {
+                    const d = JSON.parse(ev.target.result);
+                    if (!Array.isArray(d.reports)) throw new Error('format');
+                    if (!confirm(`Restore ${d.reports.length} laporan? Data saat ini akan diganti.`)) return;
+                    ipcReports = d.reports; saveReports(); d.reports.forEach(r => cloudCall('saveReport', r));
+                    if (d.settings) { settings = { ...defaultSettings, ...d.settings }; localStorage.setItem(SET_KEY, JSON.stringify(settings)); }
+                    applySettings(); renderSettingsUI(); renderTable(); renderDashboard();
+                    alert('Restore berhasil.');
+                } catch (err) { alert('File backup tidak valid.'); }
+                e.target.value = '';
+            };
+            rd.readAsText(f);
+        }
+        function resetDemo() {
+            if (cloudUser) { alert('Dinonaktifkan saat terhubung ke cloud.'); return; }
+            if (!confirm('Ganti semua laporan dengan data contoh?')) return;
+            ipcReports = JSON.parse(JSON.stringify(initialDummy)); saveReports(); renderSettingsUI();
+        }
+        function deleteAllData() {
+            if (cloudUser) { alert('Dinonaktifkan saat terhubung ke cloud. Hapus laporan satu per satu dari Riwayat.'); return; }
+            if (!confirm('Hapus SEMUA laporan? Tindakan ini tidak bisa dibatalkan. Sebaiknya backup dulu.')) return;
+            ipcReports = []; saveReports(); renderSettingsUI();
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function switchTab(tab) {
+            document.getElementById('section-dashboard').classList.add('hidden');
+            document.getElementById('section-form').classList.add('hidden');
+            document.getElementById('section-history').classList.add('hidden');
+            document.getElementById('section-settings').classList.add('hidden');
+
+            // Desktop Tab Highlight
+            ['dashboard', 'form', 'history', 'settings'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                const mobBtn = document.getElementById(`mob-nav-${t}`);
+                if (t === tab) {
+                    btn.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all bg-blue-600 text-white shadow";
+                    if(mobBtn) mobBtn.className = "flex flex-col items-center text-xs py-1 text-blue-400 font-medium";
+                } else {
+                    btn.className = "px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-all";
+                    if(mobBtn) mobBtn.className = "flex flex-col items-center text-xs py-1 text-slate-400 font-medium";
+                }
+            });
+
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+
+            if (tab === 'dashboard') {
+                renderDashboard();
+            } else if (tab === 'history') {
+                renderTable();
+            } else if (tab === 'settings') {
+                renderSettingsUI();
+            } else if (tab === 'form') {
+                updateTime();
+            }
+        }
+
+        // --- DYNAMIC PARAMETER FORM LOGIC ---
+        const defaultParams = [
+            { name: 'Bobot Rata-rata / Volume', spec: 'Sesuai Standar Deviasi ±2%' },
+            { name: 'Uji Kebocoran Wadah', spec: 'Vakum / Tidak ada kebocoran' },
+            { name: 'Pemeriksaan Visual / Fisik', spec: 'Homogen & Bebas Partikel Asing' }
+        ];
+
+        function renderDefaultParameters() {
+            const container = document.getElementById('params-container');
+            container.innerHTML = '';
+            (settings.params || defaultParams).forEach(p => addParamRow(p.name, p.spec, p.min, p.max));
+        }
+
+        function addParamRow(name = '', spec = '', min = '', max = '') {
+            const container = document.getElementById('params-container');
+            const div = document.createElement('div');
+            div.className = "grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 items-center";
+            const c = "w-full bg-white border border-slate-300 text-slate-900 text-xs rounded-lg p-2";
+            div.innerHTML = `
+                <div class="sm:col-span-4"><input type="text" placeholder="Nama Parameter" value="${esc(name)}" required class="param-name ${c}"></div>
+                <div class="sm:col-span-3"><input type="text" placeholder="Spesifikasi" value="${esc(spec)}" class="param-spec ${c}"></div>
+                <div class="sm:col-span-3"><input type="text" placeholder="Hasil Pengujian" required class="param-result ${c}"></div>
+                <div class="sm:col-span-2 flex items-center space-x-2">
+                    <select class="param-status bg-white border border-slate-300 text-slate-900 text-xs rounded-lg p-2 w-full"><option value="PASS">PASS</option><option value="FAIL">FAIL</option></select>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div class="sm:col-span-12 grid grid-cols-2 gap-2">
+                    <input type="number" step="any" placeholder="Batas bawah (opsional, status otomatis)" value="${esc(min)}" class="param-min ${c}">
+                    <input type="number" step="any" placeholder="Batas atas (opsional)" value="${esc(max)}" class="param-max ${c}">
+                </div>`;
+            div.addEventListener('input', e => { if (e.target.matches('.param-result,.param-min,.param-max')) autoJudge(div); });
+            container.appendChild(div);
+        }
+        function autoJudge(row) {
+            const v = parseFloat(row.querySelector('.param-result').value.replace(',', '.'));
+            const mn = row.querySelector('.param-min').value, mx = row.querySelector('.param-max').value;
+            if (isNaN(v) || (mn === '' && mx === '')) return;
+            const bad = (mn !== '' && v < +mn) || (mx !== '' && v > +mx);
+            row.querySelector('.param-status').value = bad ? 'FAIL' : 'PASS';
+        }
+
+        // --- CAMERA & WEBRTC LOGIC ---
+        async function startCamera() {
+            const video = document.getElementById('webcam-video');
+            const placeholder = document.getElementById('camera-placeholder');
+            const btnCapture = document.getElementById('btn-capture');
+            const btnSwitch = document.getElementById('btn-switch-cam');
+
+            try {
+                if (mediaStream) {
+                    stopCamera();
+                }
+
+                const constraints = {
+                    video: { facingMode: facingMode }
+                };
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = mediaStream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                btnCapture.disabled = false;
+                btnSwitch.classList.remove('hidden');
+            } catch (err) {
+                console.error("Akses Kamera Gagal: ", err);
+                alert("Tidak dapat mengakses kamera! Pastikan Anda memberi izin akses kamera di browser atau gunakan opsi upload file.");
+            }
+        }
+
+        function switchCamera() {
+            facingMode = (facingMode === 'user') ? 'environment' : 'user';
+            startCamera();
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('webcam-video');
+            const canvas = document.getElementById('photo-canvas');
+            
+            if (!mediaStream) return;
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to base64 Data URL
+            compressImage(canvas.toDataURL('image/jpeg', 0.95), d => { capturedPhotoData = d; displayPhotoPreview(d); });
+            stopCamera();
+
+            document.getElementById('webcam-video').classList.add('hidden');
+            document.getElementById('camera-placeholder').classList.remove('hidden');
+            document.getElementById('btn-capture').disabled = true;
+            document.getElementById('btn-switch-cam').classList.add('hidden');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    compressImage(e.target.result, d => { capturedPhotoData = d; displayPhotoPreview(d); });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function displayPhotoPreview(url) {
+            const container = document.getElementById('preview-container');
+            container.innerHTML = `<img src="${url}" class="w-full h-full object-contain">`;
+            document.getElementById('btn-clear-photo').classList.remove('hidden');
+        }
+
+        function clearPhoto() {
+            capturedPhotoData = null;
+            document.getElementById('preview-container').innerHTML = `<span class="text-xs text-slate-400 italic">Belum ada foto diambil</span>`;
+            document.getElementById('btn-clear-photo').classList.add('hidden');
+            document.getElementById('fallback-file').value = '';
+        }
+
+        // --- SUBMIT FORM ---
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            // Collect parameters
+            const paramRows = document.querySelectorAll('#params-container > div');
+            const parametersList = [];
+            paramRows.forEach(row => {
+                const name = row.querySelector('.param-name').value;
+                const spec = row.querySelector('.param-spec').value;
+                const result = row.querySelector('.param-result').value;
+                const status = row.querySelector('.param-status').value;
+                if(name) {
+                    parametersList.push({ name, spec, result, status, min: row.querySelector('.param-min').value, max: row.querySelector('.param-max').value });
+                }
+            });
+
+            // Status selected
+            const statusRadios = document.getElementsByName('ipc-status');
+            let selectedStatus = 'PASS';
+            for (const r of statusRadios) {
+                if (r.checked) {
+                    selectedStatus = r.value;
+                    break;
+                }
+            }
+
+            if (settings.reqPhoto && !capturedPhotoData) { alert('Bukti foto wajib dilampirkan.'); return; }
+            if (settings.reqNote && selectedStatus !== 'PASS' && !document.getElementById('deviation-note').value.trim()) { alert('Catatan wajib diisi untuk status ' + selectedStatus + '.'); return; }
+            if (settings.autoStatus && selectedStatus === 'PASS' && parametersList.some(p => p.status === 'FAIL')) {
+                if (confirm('Ada parameter FAIL tetapi status PASS. Ubah status menjadi FAIL?')) selectedStatus = 'FAIL';
+            }
+
+            const newReport = {
+                id: document.getElementById('display-report-id').innerText,
+                timestamp: document.getElementById('inspection-time').value,
+                inspector: document.getElementById('inspector-name').value,
+                line: document.getElementById('production-line').value,
+                product: document.getElementById('product-name').value,
+                batch: document.getElementById('batch-number').value,
+                stage: document.getElementById('process-stage').value,
+                status: selectedStatus,
+                note: document.getElementById('deviation-note').value,
+                photo: capturedPhotoData || 'https://placehold.co/400x300/e2e8f0/64748b?text=Tidak+Ada+Foto',
+                parameters: parametersList,
+                review: selectedStatus !== 'PASS' ? { state: 'OPEN' } : null
+            };
+
+            ipcReports.unshift(newReport);
+            saveReports();
+            cloudCall('saveReport', newReport);
+
+            // Reset Form & Redirect
+            alert('Laporan IPC QA Berhasil Disimpan!');
+            document.getElementById('ipc-form').reset();
+            clearPhoto();
+            applySettings();
+            generateReportID();
+            renderDefaultParameters();
+            switchTab('history');
+        }
+
+        // --- DASHBOARD CHARTS & STATS ---
+        function renderDashboard() {
+            const lineFilter = document.getElementById('filter-line').value;
+            const statusFilter = document.getElementById('filter-status').value;
+
+            // Filter data
+            let filtered = ipcReports.filter(r => {
+                const matchLine = (lineFilter === 'ALL' || r.line === lineFilter);
+                const matchStatus = (statusFilter === 'ALL' || r.status === statusFilter);
+                const per = document.getElementById('filter-period').value;
+                const okP = per === 'ALL' || r.timestamp.slice(0, 10) >= new Date(Date.now() - per * 864e5).toISOString().slice(0, 10);
+                return matchLine && matchStatus && okP;
+            });
+
+            // Calculate Stats
+            const total = filtered.length;
+            const passCount = filtered.filter(r => r.status === 'PASS').length;
+            const failCount = filtered.filter(r => r.status === 'FAIL').length;
+            const condCount = filtered.filter(r => r.status === 'CONDITIONAL').length;
+            const passRate = total > 0 ? ((passCount / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-pass').innerText = passCount;
+            document.getElementById('stat-fail').innerText = failCount;
+            document.getElementById('stat-rate').innerText = `${passRate}%`;
+
+            // Render Charts
+            renderStatusChart(passCount, failCount, condCount);
+            renderTrendChart(filtered);
+            renderInsights(filtered);
+        }
+
+function renderInsights(f) {
+            const card = (t, ic, body) => `<div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80"><h3 class="text-base font-semibold text-slate-900 mb-3"><i class="fa-solid ${ic} mr-2 text-blue-600"></i>${t}</h3>${body}</div>`;
+            const ul = a => a.length ? '<ul class="text-xs space-y-1.5">' + a.map(x => `<li class="flex justify-between gap-2 border-b border-slate-100 pb-1">${x}</li>`).join('') + '</ul>' : '<p class="text-xs text-slate-400">Belum ada data.</p>';
+            const grp = k => { const m = {}; f.forEach(r => { const x = m[r[k]] = m[r[k]] || { t: 0, p: 0 }; x.t++; if (r.status === 'PASS') x.p++; }); return Object.entries(m).sort((a, b) => a[1].p / a[1].t - b[1].p / b[1].t).map(([n, v]) => `<span>${esc(n)}</span><b>${Math.round(v.p / v.t * 100)}% (${v.t})</b>`); };
+            const fp = {}; f.forEach(r => (r.parameters || []).forEach(p => { if (p.status === 'FAIL') fp[p.name] = (fp[p.name] || 0) + 1; }));
+            const top = Object.entries(fp).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n, c]) => `<span>${esc(n)}</span><b class="text-rose-600">${c}x</b>`);
+            const bm = {}; f.filter(r => r.status === 'FAIL').forEach(r => bm[r.batch] = (bm[r.batch] || 0) + 1);
+            const rep = Object.entries(bm).filter(([, n]) => n >= 2).map(([b, n]) => `<span>Batch ${esc(b)}</span><b class="text-rose-600">FAIL ${n}x</b>`);
+            const open = f.filter(r => r.status !== 'PASS' && (!r.review || r.review.state !== 'CLOSED')).length;
+            const alerts = rep.concat(open ? [`<span>Tindak lanjut belum Closed</span><b class="text-amber-600">${open}</b>`] : []);
+            document.getElementById('dash-insights').innerHTML =
+                card('Peringatan', 'fa-bell', alerts.length ? ul(alerts) : '<p class="text-xs text-emerald-600">Tidak ada peringatan.</p>') +
+                card('Parameter Paling Sering Gagal', 'fa-ranking-star', ul(top)) +
+                card('Pass Rate per Line', 'fa-industry', ul(grp('line'))) +
+                card('Pass Rate per Inspector', 'fa-user-check', ul(grp('inspector')));
+        }
+
+        function renderStatusChart(pass, fail, cond) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            if (statusChartInstance) {
+                statusChartInstance.destroy();
+            }
+
+            statusChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['PASS (Lolos)', 'FAIL (Gagal)', 'CONDITIONAL (Bersyarat)'],
+                    datasets: [{
+                        data: [pass, fail, cond],
+                        backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderTrendChart(reports) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+
+            // Group by Date
+            const dateMap = {};
+            reports.forEach(r => {
+                const date = r.timestamp.split(' ')[0];
+                if (!dateMap[date]) {
+                    dateMap[date] = { pass: 0, fail: 0, cond: 0 };
+                }
+                if (r.status === 'PASS') dateMap[date].pass++;
+                else if (r.status === 'FAIL') dateMap[date].fail++;
+                else dateMap[date].cond++;
+            });
+
+            const labels = Object.keys(dateMap).sort();
+            const passData = labels.map(d => dateMap[d].pass);
+            const failData = labels.map(d => dateMap[d].fail);
+            const condData = labels.map(d => dateMap[d].cond);
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['Hari ini'],
+                    datasets: [
+                        { label: 'Pass', data: passData.length ? passData : [0], backgroundColor: '#10b981' },
+                        { label: 'Fail', data: failData.length ? failData : [0], backgroundColor: '#f43f5e' },
+                        { label: 'Conditional', data: condData.length ? condData : [0], backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // --- DATA TABLE RENDER ---
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('table-empty');
+            tbody.innerHTML = '';
+            const list = getHistList();
+            const pages = Math.max(1, Math.ceil(list.length / PAGE));
+            if (histPage > pages) histPage = pages;
+            const pageItems = list.slice((histPage - 1) * PAGE, histPage * PAGE);
+            renderPager(pages, list.length);
+            if (list.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            pageItems.forEach(report => {
+                const rv = report.status !== 'PASS' ? `<div class="text-[10px] mt-1 text-slate-500">${esc((report.review || {state:'OPEN'}).state)}</div>` : '';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+                if (report.status === 'FAIL') badgeClass = "bg-rose-100 text-rose-800 border-rose-300";
+                if (report.status === 'CONDITIONAL') badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+
+                tr.innerHTML = `
+                    <td class="p-3 sm:p-4">
+                        <div class="font-bold text-slate-900">${esc(report.id)}</div>
+                        <div class="text-[11px] text-slate-500">${esc(report.timestamp)}</div>
+                    </td>
+                    <td class="p-3 sm:p-4">
+                        <div class="font-medium text-slate-900">${esc(report.product)}</div>
+                        <div class="text-[11px] text-slate-500 font-mono">Batch: ${esc(report.batch)}</div>
+                    </td>
+                    <td class="p-3 sm:p-4">
+                        <span class="inline-block bg-slate-100 px-2 py-0.5 rounded text-[11px] font-semibold text-slate-700">${esc(report.line)}</span>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${esc(report.stage)}</div>
+                    </td>
+                    <td class="p-3 sm:p-4 font-medium text-slate-800">${esc(report.inspector)}</td>
+                    <td class="p-3 sm:p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">
+                            ${esc(report.status)}
+                        </span>${rv}
+                    </td>
+                    <td class="p-3 sm:p-4 text-center">
+                        <img src="${esc(report.photo)}" class="w-10 h-10 object-cover rounded-lg mx-auto border border-slate-200 cursor-pointer" onclick="viewDetail('${esc(report.id)}')">
+                    </td>
+                    <td class="p-3 sm:p-4 text-center">
+                        <button onclick="viewDetail('${esc(report.id)}')" class="text-blue-600 hover:text-blue-800 bg-blue-50 p-2 rounded-lg text-xs font-semibold">
+                            <i class="fa-solid fa-eye"></i> Detail
+                        </button>
+                        <button onclick="deleteReport('${esc(report.id)}')" class="text-rose-600 bg-rose-50 p-2 rounded-lg text-xs ml-1" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() { histPage = 1; renderTable(); }
+        const PAGE = 20; let histPage = 1;
+        function getHistList() {
+            const g = id => document.getElementById(id).value;
+            const q = g('search-input').toLowerCase(), f = g('hf-from'), t = g('hf-to'), l = g('hf-line'), st = g('hf-status'), rv = g('hf-review');
+            return ipcReports.filter(r => {
+                const d = r.timestamp.slice(0, 10);
+                const s2 = r.status === 'PASS' ? '' : ((r.review && r.review.state) || 'OPEN');
+                return (!q || [r.id, r.product, r.batch, r.inspector].join(' ').toLowerCase().includes(q)) && (!f || d >= f) && (!t || d <= t) && (!l || r.line === l) && (!st || r.status === st) && (!rv || s2 === rv);
+            });
+        }
+        function renderPager(pages, total) {
+            const b = "px-2 py-1 border rounded-lg";
+            document.getElementById('hist-pager').innerHTML = `<span>${total} laporan</span><span><button class="${b}" onclick="histPage=Math.max(1,histPage-1);renderTable()">&lsaquo;</button> ${histPage} / ${pages} <button class="${b}" onclick="histPage=Math.min(${pages},histPage+1);renderTable()">&rsaquo;</button></span>`;
+        }
+        function deleteReport(id) {
+            if (!confirm('Hapus laporan ' + id + '? Tidak bisa dibatalkan.')) return;
+            ipcReports = ipcReports.filter(r => r.id !== id); saveReports(); cloudCall('delReport', id); renderTable();
+        }
+        function curParams() {
+            return [...document.querySelectorAll('#params-container > div')].map(r => ({ name: r.querySelector('.param-name').value.trim(), spec: r.querySelector('.param-spec').value.trim(), min: r.querySelector('.param-min').value, max: r.querySelector('.param-max').value })).filter(p => p.name);
+        }
+        function tplKey() { return document.getElementById('product-name').value.trim() + '|' + document.getElementById('process-stage').value; }
+        function saveTemplate() {
+            const k = tplKey();
+            if (k.startsWith('|') || k.endsWith('|')) { alert('Isi nama produk dan tahap proses dulu.'); return; }
+            settings.templates = settings.templates || {}; settings.templates[k] = curParams();
+            localStorage.setItem(SET_KEY, JSON.stringify(settings)); cloudSet(); refreshProductList();
+            alert('Template tersimpan. Parameter akan terisi otomatis untuk produk & tahap ini.');
+        }
+        function loadTemplate() {
+            const t = (settings.templates || {})[tplKey()]; if (!t) return;
+            document.getElementById('params-container').innerHTML = '';
+            t.forEach(p => addParamRow(p.name, p.spec, p.min, p.max));
+        }
+        function refreshProductList() {
+            const n = new Set([...Object.keys(settings.templates || {}).map(k => k.split('|')[0]), ...ipcReports.map(r => r.product)]);
+            document.getElementById('product-list').innerHTML = [...n].map(x => `<option value="${esc(x)}">`).join('');
+        }
+
+        // --- DETAIL MODAL ---
+        function viewDetail(id) {
+            const report = ipcReports.find(r => r.id === id);
+            if (!report) return;
+
+            const modal = document.getElementById('detail-modal');
+            const content = document.getElementById('modal-content');
+
+            let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+            if (report.status === 'FAIL') badgeClass = "bg-rose-100 text-rose-800 border-rose-300";
+            if (report.status === 'CONDITIONAL') badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+
+            let paramsTableHtml = report.parameters.map(p => `
+                <tr class="border-b">
+                    <td class="py-2 font-medium">${esc(p.name)}</td>
+                    <td class="py-2 text-slate-500">${esc(p.spec) || '-'}</td>
+                    <td class="py-2 font-semibold">${esc(p.result)}</td>
+                    <td class="py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'PASS' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${p.status}</span></td>
+                </tr>
+            `).join('');
+
+            content.innerHTML = `
+                <div class="flex justify-between items-start border-b pb-3">
+                    <div>
+                        <span class="text-xs text-slate-400 font-mono">${esc(report.id)}</span>
+                        <h2 class="text-lg font-bold text-slate-900">${esc(report.product)}</h2>
+                        <p class="text-xs text-slate-500">Nomor Batch: <span class="font-semibold text-slate-700">${esc(report.batch)}</span></p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                        ${esc(report.status)}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl">
+                    <div><span class="text-slate-500">Inspector QA:</span> <strong class="text-slate-800">${esc(report.inspector)}</strong></div>
+                    <div><span class="text-slate-500">Line Produksi:</span> <strong class="text-slate-800">${esc(report.line)}</strong></div>
+                    <div><span class="text-slate-500">Tahap IPC:</span> <strong class="text-slate-800">${esc(report.stage)}</strong></div>
+                    <div><span class="text-slate-500">Waktu:</span> <strong class="text-slate-800">${esc(report.timestamp)}</strong></div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">Parameter Pengujian:</h4>
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b text-slate-500">
+                                <th class="py-1">Parameter</th>
+                                <th class="py-1">Spesifikasi</th>
+                                <th class="py-1">Hasil</th>
+                                <th class="py-1">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${paramsTableHtml}</tbody>
+                    </table>
+                </div>
+
+                ${report.note ? `
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl">
+                    <h4 class="font-bold text-amber-800 text-xs mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Catatan Deviasi / Ketidaksesuaian:</h4>
+                    <p class="text-xs text-amber-900">${esc(report.note)}</p>
+                </div>` : ''}
+
+                <div>
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">Lampiran Bukti Foto Inspection:</h4>
+                    <div class="w-full h-48 sm:h-64 rounded-xl border border-slate-200 overflow-hidden bg-black flex items-center justify-center">
+                        <img src="${esc(report.photo)}" class="max-h-full max-w-full object-contain">
+                    </div>
+                </div>
+            `;
+
+            content.insertAdjacentHTML('beforeend', reviewHTML(report));
+            currentDetailId = id;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        let currentDetailId = null;
+        function reviewHTML(r) {
+            if (r.status === 'PASS') return '';
+            const v = r.review || { state: 'OPEN' }, c = 'class="inp"';
+            const opt = x => `<option value="${x}" ${v.state === x ? 'selected' : ''}>${x}</option>`;
+            return `<div class="border border-slate-200 rounded-xl p-3 space-y-2 bg-slate-50">
+                <h4 class="font-bold text-xs uppercase tracking-wider text-slate-800">Tinjauan &amp; Tindak Lanjut</h4>
+                <div class="grid grid-cols-2 gap-2"><select id="rv-state" ${c}>${opt('OPEN')}${opt('REVIEWED')}${opt('CLOSED')}</select>
+                <input id="rv-by" ${c} placeholder="Ditinjau oleh (Supervisor/QA)" value="${esc(v.by)}"></div>
+                <input id="rv-dev" ${c} placeholder="No. Laporan Penyimpangan (mis. FO.QA.000028)" value="${esc(v.devNo)}">
+                <textarea id="rv-remark" rows="2" ${c} placeholder="Tindakan perbaikan / keputusan">${esc(v.remark)}</textarea>
+                <button onclick="saveReview('${esc(r.id)}')" class="set-btn bg-blue-600 text-white">Simpan Tinjauan</button>
+                ${v.at ? `<p class="text-[11px] text-slate-400">Terakhir diperbarui ${esc(v.at)}</p>` : ''}</div>`;
+        }
+        function saveReview(id) {
+            const r = ipcReports.find(x => x.id === id); if (!r) return;
+            const g = i => document.getElementById(i).value.trim();
+            r.review = { state: g('rv-state'), by: g('rv-by'), devNo: g('rv-dev'), remark: g('rv-remark'), at: new Date().toISOString().slice(0, 16).replace('T', ' ') };
+            saveReports(); cloudCall('saveReport', r); renderTable(); alert('Tinjauan disimpan.');
+        }
+        function printReport() {
+            const r = ipcReports.find(x => x.id === currentDetailId); if (!r) return;
+            const w = window.open('', '_blank'); if (!w) { alert('Izinkan pop-up untuk mencetak.'); return; }
+            const rows = (r.parameters || []).map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.spec || '-')}</td><td>${esc(p.result)}</td><td>${esc(p.status)}</td></tr>`).join('');
+            const v = r.review;
+            w.document.write(`<html><head><title>${esc(r.id)}</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:24px}table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #444;padding:5px;text-align:left}th{background:#eee}h2,h3{margin:2px 0}.sig{display:flex;gap:16px;margin-top:24px}.sig div{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center;margin-top:70px}img{max-width:320px;max-height:240px}</style></head><body>
+            <h2>${esc(settings.org)}</h2><h3>Laporan In-Process Control (IPC) QA</h3><hr>
+            <table><tr><td>No. Laporan</td><td>${esc(r.id)}</td><td>Waktu</td><td>${esc(r.timestamp)}</td></tr>
+            <tr><td>Produk</td><td>${esc(r.product)}</td><td>No. Batch</td><td>${esc(r.batch)}</td></tr>
+            <tr><td>Line</td><td>${esc(r.line)}</td><td>Tahap</td><td>${esc(r.stage)}</td></tr>
+            <tr><td>Inspector</td><td>${esc(r.inspector)}</td><td>Status</td><td><b>${esc(r.status)}</b></td></tr></table>
+            <table><tr><th>Parameter</th><th>Spesifikasi</th><th>Hasil</th><th>Status</th></tr>${rows}</table>
+            ${r.note ? `<p><b>Catatan:</b> ${esc(r.note)}</p>` : ''}
+            ${v ? `<p><b>Tinjauan:</b> ${esc(v.state)} ${v.by ? '- ' + esc(v.by) : ''} ${v.devNo ? '| No. Penyimpangan: ' + esc(v.devNo) : ''} ${v.remark ? '<br>' + esc(v.remark) : ''}</p>` : ''}
+            <p><img src="${esc(r.photo)}"></p>
+            <div class="sig"><div>Dibuat oleh<br>${esc(r.inspector)}</div><div>Diperiksa (Supervisor QA)</div><div>Disetujui (QA Manager)</div></div>
+            <script>onload=()=>print()<\/script></body></html>`);
+            w.document.close();
+        }
+
+        // --- EXPORT TO CSV ---
+        function exportCSV() {
+            if (ipcReports.length === 0) {
+                alert("Tidak ada data untuk di-export.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID Laporan,Tanggal Waktu,Inspector,Line Produksi,Produk,Nomor Batch,Tahap IPC,Status,Catatan\n";
+
+            ipcReports.forEach(r => {
+                const noteClean = (r.note || '').replace(/"/g, '""');
+                csvContent += `"${r.id}","${r.timestamp}","${r.inspector}","${r.line}","${r.product}","${r.batch}","${r.stage}","${r.status}","${noteClean}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `IPC_QA_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB7DXxa9uPk2ufDg8Hwl8bhMk7FabGQMVY",
+    authDomain: "daily-ipc-qa-line-2.firebaseapp.com",
+    projectId: "daily-ipc-qa-line-2",
+    storageBucket: "daily-ipc-qa-line-2.firebasestorage.app",
+    messagingSenderId: "827007656092",
+    appId: "1:827007656092:web:1d8b595f999fd17e284d59",
+    measurementId: "G-LWNH5K0MCQ"
+  };
+  const app = initializeApp(firebaseConfig);
+  try { getAnalytics(app); } catch (e) {}
+  const auth = getAuth(app), db = getFirestore(app);
+  let offR = null, offC = null;
+  window.cloud = {
+    login: (e, p) => signInWithEmailAndPassword(auth, e, p),
+    logout: () => signOut(auth),
+    saveReport: r => setDoc(doc(db, 'reports', r.id), JSON.parse(JSON.stringify(r))),
+    delReport: id => deleteDoc(doc(db, 'reports', id)),
+    saveSettings: st => setDoc(doc(db, 'config', 'main'), { json: JSON.stringify(st) })
+  };
+  onAuthStateChanged(auth, u => {
+    window.onCloudAuth(u);
+    if (offR) offR(); if (offC) offC();
+    if (!u) return;
+    offR = onSnapshot(query(collection(db, 'reports'), orderBy('timestamp', 'desc'), limit(200)), snap => window.onCloudReports(snap.docs.map(d => d.data())), e => alert('Gagal membaca cloud: ' + e.message));
+    offC = onSnapshot(doc(db, 'config', 'main'), d => { if (d.exists()) window.onCloudSettings(JSON.parse(d.data().json)); });
+  });
+</script>
+</body>
+</html>
